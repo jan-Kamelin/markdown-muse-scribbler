@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Document {
   id: string;
@@ -32,6 +33,7 @@ const DocumentList = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchDocuments();
@@ -59,14 +61,18 @@ const DocumentList = () => {
   };
 
   const createDocument = async () => {
-    if (!newDocTitle.trim()) return;
+    if (!newDocTitle.trim() || !user) return;
     
     setIsCreating(true);
     try {
       const { data, error } = await supabase
         .from('documents')
         .insert([
-          { title: newDocTitle, content: '# ' + newDocTitle + '\n\nStart writing here...' }
+          { 
+            title: newDocTitle, 
+            content: '# ' + newDocTitle + '\n\nStart writing here...', 
+            user_id: user.id 
+          }
         ])
         .select();
 

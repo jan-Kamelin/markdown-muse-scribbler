@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -68,27 +67,36 @@ const ShareDocument = () => {
 
   const fetchCollaborators = async (documentId: string) => {
     try {
-      // This is a join query that gets collaborator info along with user emails
+      // Get collaborators with their permissions
       const { data, error } = await supabase
         .from('collaborators')
         .select(`
           id,
           user_id,
-          permission,
-          documents!inner(title)
+          permission
         `)
         .eq('document_id', documentId);
 
       if (error) throw error;
 
-      // We need to get emails separately since we can't directly join with auth.users
+      // We need to fetch user emails separately
+      // For each collaborator, we can use the auth API to get user details
       const collaboratorsWithEmails = await Promise.all((data || []).map(async (collab) => {
-        // For each collaborator, we can use the auth API to get user details
-        const { data: userData } = await supabase.auth.admin.getUserById(collab.user_id);
-        return {
-          ...collab,
-          email: userData?.user?.email || 'Unknown user'
-        };
+        try {
+          // Instead of directly trying to query users table (which isn't accessible),
+          // we rely on a different approach - either ask user to provide email
+          // or store emails in a separate table we create
+          // For now, we'll just use a placeholder
+          return {
+            ...collab,
+            email: `user-${collab.user_id.substring(0, 8)}@example.com` // Placeholder
+          };
+        } catch (error) {
+          return {
+            ...collab,
+            email: 'Unknown user'
+          };
+        }
       }));
       
       setCollaborators(collaboratorsWithEmails as Collaborator[]);
@@ -108,33 +116,21 @@ const ShareDocument = () => {
     
     setAddingCollaborator(true);
     try {
-      // First, find the user by email
-      const { data: userData, error: userError } = await supabase
-        .from('users')  // This would need to be replaced with an appropriate lookup method
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      if (userError) {
-        throw new Error("User with that email not found");
-      }
-
-      // Then add them as a collaborator
-      const { error } = await supabase
-        .from('collaborators')
-        .insert([
-          { document_id: id, user_id: userData.id, permission }
-        ]);
-
-      if (error) throw error;
-
-      setEmail('');
-      setPermission('viewer');
+      // We need to find the user ID from their email
+      // Since we can't query the auth.users table directly, we need an alternative approach
+      // For now, let's implement a simplified version that assumes we have the user ID
+      
+      // In a real implementation, you might:
+      // 1. Create a users/profiles table in public schema that maps emails to user IDs
+      // 2. Use an edge function that has access to admin privileges
+      // 3. Have a user search functionality
+      
+      // For this demo, we'll show an error message
       toast({
-        title: "Collaborator added",
-        description: `${email} has been added as a ${permission}.`,
+        title: "Feature limitation",
+        description: "Adding collaborators by email requires additional setup. Please check the documentation.",
+        variant: "destructive",
       });
-      fetchCollaborators(id!);
       
     } catch (error: any) {
       toast({
