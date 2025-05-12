@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const DocumentEditor = () => {
   const { id } = useParams<{ id: string }>();
-  const [document, setDocument] = useState<{ title: string, content: string } | null>(null);
+  const [documentData, setDocumentData] = useState<{ title: string, content: string } | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ const DocumentEditor = () => {
 
       if (error) throw error;
       
-      setDocument(data);
+      setDocumentData(data);
       setTitle(data.title);
       setContent(data.content);
     } catch (error: any) {
@@ -68,7 +68,7 @@ const DocumentEditor = () => {
 
       if (error) throw error;
       
-      setDocument({ title, content });
+      setDocumentData({ title, content });
       toast({
         title: "Document saved",
         description: "Your changes have been saved successfully.",
